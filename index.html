@@ -20,7 +20,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 header.top{position:sticky;top:0;z-index:5;background:rgba(247,243,234,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
 header.top .wrap{display:flex;align-items:center;gap:12px;padding-top:10px;padding-bottom:10px}
 .brand{white-space:nowrap;display:flex;align-items:center;gap:10px;font-family:var(--serif);font-size:1.15rem;font-weight:700;color:var(--green);background:none;border:0;padding:0}
-.brand .mark{width:30px;height:30px;border-radius:8px;background:var(--green);color:#e9c46a;display:grid;place-items:center;font-size:1rem}
+.brand .mark{width:30px;height:30px;border-radius:8px;background:var(--green);color:#f4c430;display:grid;place-items:center;font-size:1rem}
 .spacer{flex:1}
 .ghost{background:none;border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-size:.88rem;color:var(--muted)}
 .ghost:hover{border-color:var(--green-2);color:var(--green)}
@@ -150,7 +150,7 @@ h2{font-size:1.3rem}
 </head>
 <body>
 <header class="top"><div class="wrap">
-  <button class="brand" onclick="go('home')"><span class="mark" title="Tarak tamga"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="square" stroke-linejoin="miter"><path d="M6 3.5V11H18V3.5M12 2.5V21.5"/></svg></span><span class="bt">Eser–Müellif Atlası</span></button>
+  <button class="brand" onclick="go('home')"><span class="mark" title="Tarak tamga"><svg viewBox="24 22 152 96" width="22" height="14" aria-hidden="true" fill="currentColor"><rect x="45" y="33" width="112" height="12"/><rect x="45" y="33" width="12" height="62"/><rect x="28" y="80" width="29" height="15"/><rect x="145" y="33" width="12" height="62"/><rect x="145" y="80" width="27" height="15"/><rect x="97" y="33" width="13" height="70"/><rect x="77" y="97" width="53" height="15"/></svg></span><span class="bt">Eser–Müellif Atlası</span></button>
   <div class="spacer"></div>
   <button class="ghost" id="btnReports" title="Listeye eklediğin hata bildirimleri" onclick="openList()">Bildirimlerim</button>
   <button class="ghost hide" id="backBtn" onclick="go('home')">←<span class="lg"> Ana sayfa</span></button>
