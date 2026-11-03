@@ -236,7 +236,34 @@ const NARR = {"hadisUsul":["I. Hadis Usulü Edebiyatı Müstakilleri olmasa bile
 // TDV İslâm Ansiklopedisi maddeleri: sadece konu anlatımlarında, ismin geçtiği her yerde link olur.
 // Her adres tek tek açılıp kontrol edilerek eklenir. v: metinde geçebilecek yazımlar.
 const TDV = [
+  // Fıkıh
   { s: 'ebu-hanife', v: ['Ebû Hanîfe', "İmâm-ı A'zam"] },
+  { s: 'malik-b-enes', v: ['İmam Mâlik', 'Mâlik b. Enes', 'İmâm Mâlik'] },
+  { s: 'safii', v: ['İmam Şâfiî', 'İmam Şafiî', 'İmâm Şâfiî', "Muhammed b. İdrîs eş-Şâfiî"] },
+  { s: 'ahmed-b-hanbel', v: ['Ahmed b. Hanbel', 'İmam Ahmed', 'Ahmed bin Hanbel'] },
+  { s: 'ebu-yusuf', v: ['Ebû Yûsuf', 'Ebu Yusuf'] },
+  { s: 'seybani-muhammed-b-hasan', v: ['İmam Muhammed', 'Muhammed b. Hasan eş-Şeybânî', 'Şeybânî'] },
+  { s: 'kuduri', v: ['Kudûrî'] },
+  { s: 'serahsi-semsuleimme', v: ['Serahsî', 'Şemsüleimme es-Serahsî'] },
+  { s: 'kasani', v: ['Kâsânî'] },
+  { s: 'merginani-burhaneddin', v: ['Merğînânî', 'Merğinânî', 'Mergīnânî', 'Mergınânî', 'Merginânî', 'Merğinani'] },
+  { s: 'ibnul-humam', v: ["İbnü'l-Hümâm", 'İbn Hümâm', 'İbnül Hümam'] },
+  { s: 'mevsili-abdullah-b-mahmud', v: ['Mevsılî', 'Mevsilî'] },
+  // Hadis
+  { s: 'buhari-muhammed-b-ismail', v: ['Buhârî', 'İmam Buhârî'] },
+  { s: 'muslim-b-haccac', v: ['İmam Müslim', 'Müslim b. Haccâc', 'Müslim'] },
+  { s: 'ebu-davud-es-sicistani', v: ['Ebû Dâvûd', 'Ebu Davud', 'Ebû Davud'] },
+  { s: 'tirmizi', v: ['Tirmizî', 'Tirmizi'] },
+  { s: 'nesai', v: ['Nesâî', 'Nesaî'] },
+  { s: 'ibn-mace', v: ['İbn Mâce', 'İbn Mace', 'İbni Mace'] },
+  { s: 'ibn-hacer-el-askalani', v: ['İbn Hacer el-Askalânî', 'İbn Hacer'] },
+  { s: 'ibn-hacer-el-heytemi', v: ['İbn Hacer el-Heytemî'] },
+  { s: 'ayni-bedreddin', v: ['Bedreddin el-Aynî', 'el-Aynî'] },
+  { s: 'suyuti', v: ['Suyûtî', 'Süyûtî', 'Suyuti', 'Celâleddin es-Süyûtî'] },
+  // Tefsir
+  { s: 'zemahseri', v: ['Zemahşerî', 'Zemahşeri'] },
+  { s: 'kurtubi-muhammed-b-ahmed', v: ['Kurtubî'] },
+  { s: 'kurtubi-ahmed-b-omer', v: ['Kurtubî (ö. 656)'] },
 ];
 </script>
 <script>
@@ -625,6 +652,8 @@ function fmtPara(p) {
 }
 function unitView(i) {
   const u = UNITELER[i], ok = (uStat[i] || 0) >= GECME;
+  const ov = /Şâfiî/.test(u.t) ? { 'ibn hacer': 'ibn-hacer-el-heytemi' } : null;
+  const L = h => linkNames(h, ov);
   const uzun = u.q.filter(qi => SORULAR[qi].cevap.join(' ').length >= 90);
   const kisa = u.q.filter(qi => SORULAR[qi].cevap.join(' ').length < 90);
   const kelime = u.q.reduce((t, qi) => t + SORULAR[qi].cevap.join(' ').split(/\s+/).length, 0);
@@ -635,10 +664,10 @@ function unitView(i) {
   <p class="intro">${esc(u.intro)}</p>
   <div class="lesson">
     ${uzun.map((qi, k) => { const q = SORULAR[qi];
-      return `<section class="ls" id="ls-${qi}"><h3><span class="no">${k + 1}</span>${esc(q.soru)}<button class="rep" data-s="${qi}" title="Bu bölümdeki bir hatayı bildir" onclick="openReport('s',${qi})">⚑</button></h3>${linkNames(q.cevap.map(fmtPara).join(''))}</section>`; }).join('')}
+      return `<section class="ls" id="ls-${qi}"><h3><span class="no">${k + 1}</span>${esc(q.soru)}<button class="rep" data-s="${qi}" title="Bu bölümdeki bir hatayı bildir" onclick="openReport('s',${qi})">⚑</button></h3>${L(q.cevap.map(fmtPara).join(''))}</section>`; }).join('')}
   </div>
-  ${kisa.length ? `<div class="section-title">Kısa bilgiler</div><div class="quick">${kisa.map(qi => `<div class="qk" id="ls-${qi}"><span>${esc(SORULAR[qi].soru)}</span><b>${linkNames(esc(SORULAR[qi].cevap.join(' ')))}</b></div>`).join('')}</div>` : ''}
-  ${u.narr ? `<details class="oq" id="narr" style="margin-top:18px"><summary>Ek okuma: ${NARR_BASLIK[u.narr]}</summary><div class="lesson" style="margin-top:8px">${linkNames(NARR[u.narr].map((p, k) => fmtPara(p).replace(/^<(p|div)/, `<$1 id="nr-${k}"`)).join(''))}</div><p class="count" style="margin-top:8px">Kaynak: Servet Hayma, Literatür Çalışması</p></details>` : ''}
+  ${kisa.length ? `<div class="section-title">Kısa bilgiler</div><div class="quick">${kisa.map(qi => `<div class="qk" id="ls-${qi}"><span>${esc(SORULAR[qi].soru)}</span><b>${L(esc(SORULAR[qi].cevap.join(' ')))}</b></div>`).join('')}</div>` : ''}
+  ${u.narr ? `<details class="oq" id="narr" style="margin-top:18px"><summary>Ek okuma: ${NARR_BASLIK[u.narr]}</summary><div class="lesson" style="margin-top:8px">${L(NARR[u.narr].map((p, k) => fmtPara(p).replace(/^<(p|div)/, `<$1 id="nr-${k}"`)).join(''))}</div><p class="count" style="margin-top:8px">Kaynak: Servet Hayma, Literatür Çalışması</p></details>` : ''}
   <details class="oq" style="margin-top:12px"><summary>Bu ünitenin eser–müellif tablosu (${u.ids.length} eser)</summary>
     <div class="study-list" style="margin-top:10px">${u.ids.map(id => { const r = ESERLER[id];
       return `<div class="srow"><div class="e">${esc(r.e)}</div><div class="v">${vText(r)}</div><div class="m">${esc(r.m)}</div>${r.n ? `<div class="n">${esc(r.n)}</div>` : ''}</div>`; }).join('')}</div></details>
@@ -771,22 +800,24 @@ function focusHit(f) {
 
 /* ---------- TDV linkleri (konu anlatımı metinlerinde) ---------- */
 let TDVX = null;
-function linkNames(html) {
-  TDVX ||= TDV.map(t => ({ s: t.s, v: t.v.map(x => snorm(x)) }));
+function linkNames(html, ov) {
+  TDVX ||= TDV.flatMap(t => t.v.map(x => ({ s: t.s, v: snorm(x) }))).sort((a, b) => b.v.length - a.v.length);
   let inA = false;
   return html.split(/(<[^>]+>)/).map(seg => {
     if (seg.startsWith('<')) { if (/^<a[\s>]/i.test(seg)) inA = true; if (/^<\/a>/i.test(seg)) inA = false; return seg; }
     if (inA || !seg) return seg;
     const m = nmap(seg), hits = [];
-    for (const t of TDVX) for (const v of t.v) {
+    for (const { s: slug0, v } of TDVX) {
+      const slug = (ov && ov[v]) || slug0;
       let from = 0, at;
       while ((at = m.n.indexOf(v, from)) >= 0) {
         from = at + 1;
         const a = m.map[at], b = m.map[at + v.length - 1] + 1;
         if (a > 0 && /[\p{L}]/u.test(seg[a - 1])) continue;          // kelime ortası değil
         if (b < seg.length && /[\p{L}]/u.test(seg[b])) continue;      // "Hanîfe'nin" → ek apostrofla ayrılır
+        if (seg[a] !== seg[a].toLocaleUpperCase('tr')) continue;        // isimler büyük harfle başlar ("müslim" ≠ "Müslim")
         if (hits.some(h => a < h.b && b > h.a)) continue;
-        hits.push({ a, b, s: t.s });
+        hits.push({ a, b, s: slug });
       }
     }
     if (!hits.length) return seg;
