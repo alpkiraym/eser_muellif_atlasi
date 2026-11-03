@@ -179,6 +179,12 @@ details.oq p{margin:8px 0 0;font-size:.93rem}
 .quick{display:grid;gap:6px}
 .qk{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:9px 12px;font-size:.92rem;display:grid;gap:2px}
 .qk span{color:var(--muted)}.qk b{color:var(--green)}
+.how{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:12px 16px;margin:8px 0 14px}
+.how summary{cursor:pointer;font-weight:700;color:var(--green);font-family:var(--serif);font-size:1.05rem}
+.how .steps{margin:10px 0 6px;padding-left:22px;display:grid;gap:8px;font-size:.94rem}
+.how .steps li::marker{color:var(--gold);font-weight:700}
+.how .steps b{color:var(--ink)}
+.hownote{margin:6px 0 2px;color:var(--muted);font-size:.86rem}
 .hide{display:none!important}
 @media (max-width:560px){
   .brand{white-space:nowrap;font-size:1.02rem}.lg{display:none}
@@ -297,6 +303,17 @@ function home() {
       <div class="stat"><b>${oran}</b><span>başarı oranın</span></div>
     </div>
   </section>
+  <details class="how" id="how" ${store.get('howClosed', false) ? '' : 'open'} ontoggle="store.set('howClosed', !this.open)">
+    <summary>Nasıl çalışır?</summary>
+    <ol class="steps">
+      <li><b>Alanını seç.</b> Aşağıdaki “Çalışılacak alanlar” bölümünden çalışmak istediğin alanlara dokun. Hiçbirini seçmezsen bütün alanlar dahil olur. Seçimin bütün bölümlerde geçerlidir.</li>
+      <li><b>Önce “Çalış” ile öğren.</b> Yeşil düğmeden üniteleri sırayla aç. Her ünitede konu anlatımını, kısa bilgileri ve eser–müellif tablosunu oku. Sonunda 5 soruluk mini testi çöz; 4 doğru yaparsan ünite ✓ alır. “Kaldığım yerden devam et” seni tamamlamadığın ilk üniteye götürür.</li>
+      <li><b>Sonra pekiştir.</b> <i>Test</i> sınav tarzı çoktan seçmeli sorular sorar; çeldiriciler aynı alandan gelir. <i>Eşleştirme</i>'de beş eseri müellifleriyle eşleştirirsin. <i>Bilgi kartları</i>'nda kartın önünde eser, arkasında müellif vardır. Üçünde de yanlış yaptığın ya da bilemediğin eserler sonraki turlarda daha sık karşına çıkar.</li>
+      <li><b>Sözlü sınava hazırlan.</b> <i>Sözlü mülakat</i>'ta soruyu önce kendin cevapla, sonra cevabı açıp “Bildim” ya da “Bilemedim” diye işaretle. Bilemediklerin sonraki turlarda önce gelir.</li>
+      <li><b>Takip et.</b> <i>İlerlemem</i> alan bazında başarını ve en çok karıştırdığın eserleri gösterir; oradan sadece onlarla test çözebilirsin. <i>Ara ve göz at</i> ile istediğin eseri ya da müellifi bulabilirsin.</li>
+    </ol>
+    <p class="hownote">💡 Önerilen düzen: her gün 1–2 ünite oku, ardından kısa bir test ya da kart turu yap.<br>İlerlemen yalnızca bu cihazda, bu tarayıcıda saklanır. Bir hata görürsen yanındaki <b>⚑ Bildir</b>'e dokun.</p>
+  </details>
   <button class="study-cta" onclick="go('study')"><div class="ico">❖</div><div><h3>Çalış · ünite ünite öğren</h3><p>${uDone()} / ${UNITELER.length} ünite tamamlandı. Önce oku, sonra mini testle pekiştir.</p></div></button>
   <div class="section-title">Çalışılacak alanlar ${secili.length ? '' : '· hepsi seçili'}</div>
   <div class="chips">
