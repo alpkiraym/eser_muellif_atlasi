@@ -241,15 +241,45 @@ const soruHavuz = () => secili.length ? SORULAR.map((q, i) => ({...q, i})).filte
 const eserEtiket = r => titleCount[norm(r.e)] > 1 ? `${r.e} <span style="color:var(--muted);font-weight:400">(${esc(r.s || r.a)})</span>` : esc(r.e);
 
 /* ---------- yönlendirme ---------- */
-let geri = ['home'];
-function goBack() { go(...geri); }
-function go(view, arg) {
+/* Tarayıcı geçmişi: telefonda geri kaydırma ve Android geri tuşu bir önceki ekrana döner */
+const VIEWS = () => ({home, quiz, match, flash, oralView, browse, progress, study, unitView});
+let curView = 'home', curArg = null;
+const navStack = [{ view: 'home', arg: null }];
+function render(view, arg) {
+  curView = view; curArg = arg ?? null;
   $('#backBtn').classList.toggle('hide', view === 'home');
-  geri = view === 'unitView' ? ['study'] : (view === 'quiz' && arg && arg.unit !== undefined) ? ['unitView', arg.unit] : ['home'];
-  $('#backBtn').innerHTML = geri[0] === 'home' ? '←<span class="lg"> Ana sayfa</span>' : '←<span class="lg"> Geri</span>';
+  $('#backBtn').innerHTML = '←<span class="lg"> Geri</span>';
   window.scrollTo(0, 0);
-  ({home, quiz, match, flash, oralView, browse, progress, study, unitView})[view](arg);
+  VIEWS()[view](arg ?? undefined);
 }
+function go(view, arg) {
+  const d = (history.state && history.state.d) || 0;
+  const st = { view, arg: arg === undefined ? null : arg };
+  // testten çıkarken testi geçmişte bırakma (geri gelince yeni test başlamasın)
+  if (curView === 'quiz' && view !== 'quiz') { st.d = d; navStack[d] = st; try { history.replaceState(st, ''); } catch (e) {} }
+  else { st.d = d + 1; navStack.length = d + 1; navStack.push(st); try { history.pushState(st, ''); } catch (e) {} }
+  render(view, arg);
+}
+// Üst ekrana dön: geçmişte varsa oraya geri git (geri kaydırmayla uyumlu), yoksa yeni aç
+function goUp(view, arg = null) {
+  const d = (history.state && history.state.d) || 0, key = JSON.stringify(arg);
+  for (let k = d - 1; k >= 0; k--) {
+    const e = navStack[k];
+    if (e && e.view === view && JSON.stringify(e.arg ?? null) === key) { history.go(k - d); return; }
+  }
+  go(view, arg ?? undefined);
+}
+function goBack() {
+  if (curView === 'unitView') goUp('study');
+  else if (curView === 'quiz' && curArg && curArg.unit !== undefined) goUp('unitView', curArg.unit);
+  else goUp('home');
+}
+window.addEventListener('popstate', e => {
+  if (repModal.classList.contains('open')) { repModal.classList.remove('open'); return; }
+  const st = e.state || { view: 'home', arg: null };
+  if (st.modal) { history.back(); return; }
+  render(st.view, st.arg);
+});
 
 /* ---------- ana sayfa ---------- */
 function home() {
@@ -553,7 +583,7 @@ function unitView(i) {
   const kisa = u.q.filter(qi => SORULAR[qi].cevap.join(' ').length < 90);
   const kelime = u.q.reduce((t, qi) => t + SORULAR[qi].cevap.join(' ').split(/\s+/).length, 0);
   $('#app').innerHTML = `
-  <button class="backlink" onclick="go('study')">‹ Ünitelere dön</button>
+  <button class="backlink" onclick="goUp('study')">‹ Ünitelere dön</button>
   <div class="bar" style="margin-top:6px"><span class="count">${esc(u.alan)} · Ünite ${i + 1}/${UNITELER.length} · yaklaşık ${Math.max(2, Math.round(kelime / 180))} dk okuma</span><div class="spacer"></div>${ok ? '<span class="tag" style="margin:0;background:var(--green-soft);color:var(--green)">✓ Tamamlandı</span>' : ''}</div>
   <h2>${esc(u.t)}</h2>
   <p class="intro">${esc(u.intro)}</p>
@@ -611,8 +641,8 @@ function copyText(t, msgEl) {
   if (navigator.clipboard && window.isSecureContext !== false) navigator.clipboard.writeText(t).then(done, () => fallback()); else fallback();
   function fallback() { const ta = document.createElement('textarea'); ta.value = t; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); done(); } catch (e) { msgEl.textContent = 'Kopyalanamadı; metni elle seçip kopyalayabilirsin.'; } ta.remove(); }
 }
-function openModal(html) { repBox.innerHTML = html; repModal.classList.add('open'); const f = repBox.querySelector('input,textarea,button'); f && f.focus(); }
-function closeModal() { repModal.classList.remove('open'); }
+function openModal(html) { repBox.innerHTML = html; if (!repModal.classList.contains('open')) { try { history.pushState(Object.assign({}, history.state, { modal: true }), ''); } catch (e) {} } repModal.classList.add('open'); const f = repBox.querySelector('input,textarea,button'); f && f.focus(); }
+function closeModal() { if (history.state && history.state.modal) history.back(); else repModal.classList.remove('open'); }
 repModal.addEventListener('click', e => { if (e.target === repModal || e.target.closest('[data-x="close"]')) closeModal(); });
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && repModal.classList.contains('open')) closeModal(); });
 function markReported() {
@@ -669,7 +699,8 @@ function openList() {
 }
 syncReports();
 
-go('home');
+try { history.replaceState({ view: 'home', arg: null, d: 0 }, ''); } catch (e) {}
+render('home');
 </script>
 </body>
 </html>
