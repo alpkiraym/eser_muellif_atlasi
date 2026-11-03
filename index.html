@@ -185,6 +185,21 @@ details.oq p{margin:8px 0 0;font-size:.93rem}
 .how .steps li::marker{color:var(--gold);font-weight:700}
 .how .steps b{color:var(--ink)}
 .hownote{margin:6px 0 2px;color:var(--muted);font-size:.86rem}
+.iconbtn{padding:6px 10px;display:inline-grid;place-items:center}
+.sov{position:fixed;inset:0;z-index:90;background:rgba(20,25,20,.35);display:none}
+.sov.open{display:block}
+.sbox{background:var(--paper);max-width:860px;margin:0 auto;height:100%;display:flex;flex-direction:column;box-shadow:0 10px 40px rgba(0,0,0,.2)}
+.sbar{display:flex;gap:8px;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line);background:var(--card);color:var(--muted)}
+.sbar input{flex:1;border:0;background:transparent;font-size:1.05rem;padding:8px 2px;color:var(--ink);outline:none;min-width:0}
+.sres{overflow:auto;padding:4px 14px 80px;flex:1}
+.sgrp{margin:16px 0 6px;font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.sitem{display:block;width:100%;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin:6px 0}
+.sitem:hover{border-color:var(--green-2)}
+.sitem .t{font-weight:600}.sitem .w{font-size:.78rem;color:var(--green);font-weight:600;margin-bottom:2px}
+.sitem .x{font-size:.88rem;color:var(--muted);margin-top:3px}
+mark{background:#f6df9b;color:inherit;border-radius:3px;padding:0 1px}
+.flash-target{animation:ft 2.2s ease}
+@keyframes ft{0%,40%{box-shadow:0 0 0 3px var(--gold)}100%{box-shadow:none}}
 .hide{display:none!important}
 @media (max-width:560px){
   .brand{white-space:nowrap;font-size:1.02rem}.lg{display:none}
@@ -199,11 +214,13 @@ details.oq p{margin:8px 0 0;font-size:.93rem}
 <header class="top"><div class="wrap">
   <button class="brand" onclick="go('home')"><span class="mark" title="Tarak tamga"><svg viewBox="24 22 152 96" width="22" height="14" aria-hidden="true" fill="currentColor"><rect x="45" y="33" width="112" height="12"/><rect x="45" y="33" width="12" height="62"/><rect x="28" y="80" width="29" height="15"/><rect x="145" y="33" width="12" height="62"/><rect x="145" y="80" width="27" height="15"/><rect x="97" y="33" width="13" height="70"/><rect x="77" y="97" width="53" height="15"/></svg></span><span class="bt">Eser–Müellif Atlası</span></button>
   <div class="spacer"></div>
+  <button class="ghost iconbtn" id="searchBtn" title="Ara" aria-label="Ara" onclick="openSearch()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21"/></svg></button>
   <button class="ghost" id="btnReports" title="Listeye eklediğin hata bildirimleri" onclick="openList()">Bildirimlerim</button>
   <button class="ghost hide" id="backBtn" onclick="goBack()">←<span class="lg"> Ana sayfa</span></button>
 </div></header>
 
 <main class="wrap" id="app"></main>
+<div class="sov" id="sov" role="dialog" aria-label="Arama"><div class="sbox"><div class="sbar"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21"/></svg><input id="sq" type="search" placeholder="Eser, müellif ya da konu ara…" autocomplete="off" oninput="doGlobalSearch()"><button class="ghost" onclick="closeSearch()">Kapat</button></div><div id="sres" class="sres"></div></div></div>
 <div class="modal" id="repModal" role="dialog" aria-modal="true" aria-labelledby="repTitle"><div class="mbox" id="repBox"></div></div>
 <div class="sig"><span>© 2026 Her hakkı saklıdır</span><i>·</i><span>Designed by: <b>M.ALPKİRAY</b></span></div>
 
@@ -257,6 +274,7 @@ function render(view, arg) {
   $('#backBtn').innerHTML = '←<span class="lg"> Geri</span>';
   window.scrollTo(0, 0);
   VIEWS()[view](arg ?? undefined);
+  if (pendingFocus) { const f = pendingFocus; pendingFocus = null; setTimeout(() => focusHit(f), 30); }
 }
 function go(view, arg) {
   const d = (history.state && history.state.d) || 0;
@@ -281,9 +299,10 @@ function goBack() {
   else goUp('home');
 }
 window.addEventListener('popstate', e => {
+  if ($('#sov').classList.contains('open')) { closeSearch(true); return; }
   if (repModal.classList.contains('open')) { repModal.classList.remove('open'); return; }
   const st = e.state || { view: 'home', arg: null };
-  if (st.modal) { history.back(); return; }
+  if (st.modal || st.search) { history.back(); return; }
   render(st.view, st.arg);
 });
 
@@ -310,7 +329,7 @@ function home() {
       <li><b>Önce “Çalış” ile öğren.</b> Yeşil düğmeden üniteleri sırayla aç. Her ünitede konu anlatımını, kısa bilgileri ve eser–müellif tablosunu oku. Sonunda 5 soruluk mini testi çöz; 4 doğru yaparsan ünite ✓ alır. “Kaldığım yerden devam et” seni tamamlamadığın ilk üniteye götürür.</li>
       <li><b>Sonra pekiştir.</b> <i>Test</i> sınav tarzı çoktan seçmeli sorular sorar; çeldiriciler aynı alandan gelir. <i>Eşleştirme</i>'de beş eseri müellifleriyle eşleştirirsin. <i>Bilgi kartları</i>'nda kartın önünde eser, arkasında müellif vardır. Üçünde de yanlış yaptığın ya da bilemediğin eserler sonraki turlarda daha sık karşına çıkar.</li>
       <li><b>Sözlü sınava hazırlan.</b> <i>Sözlü mülakat</i>'ta soruyu önce kendin cevapla, sonra cevabı açıp “Bildim” ya da “Bilemedim” diye işaretle. Bilemediklerin sonraki turlarda önce gelir.</li>
-      <li><b>Takip et.</b> <i>İlerlemem</i> alan bazında başarını ve en çok karıştırdığın eserleri gösterir; oradan sadece onlarla test çözebilirsin. <i>Ara ve göz at</i> ile istediğin eseri ya da müellifi bulabilirsin.</li>
+      <li><b>Takip et.</b> <i>İlerlemem</i> alan bazında başarını ve en çok karıştırdığın eserleri gösterir; oradan sadece onlarla test çözebilirsin. <i>Ara ve göz at</i> ile istediğin eseri ya da müellifi bulabilirsin. Üstteki <b>🔍</b> ise bütün eserlerde ve ünite anlatımlarında arar.</li>
     </ol>
     <p class="hownote">💡 Önerilen düzen: her gün 1–2 ünite oku, ardından kısa bir test ya da kart turu yap.<br>İlerlemen yalnızca bu cihazda, bu tarayıcıda saklanır. Bir hata görürsen yanındaki <b>⚑ Bildir</b>'e dokun.</p>
   </details>
@@ -530,6 +549,7 @@ function browse() {
   </div>
   <div class="count" id="cnt"></div>
   <div class="list" id="list"></div>`;
+  if (pendingQuery) { $('#s').value = pendingQuery; pendingQuery = null; }
   doSearch(); $('#s').focus();
 }
 function doSearch() {
@@ -606,10 +626,10 @@ function unitView(i) {
   <p class="intro">${esc(u.intro)}</p>
   <div class="lesson">
     ${uzun.map((qi, k) => { const q = SORULAR[qi];
-      return `<section class="ls"><h3><span class="no">${k + 1}</span>${esc(q.soru)}<button class="rep" data-s="${qi}" title="Bu bölümdeki bir hatayı bildir" onclick="openReport('s',${qi})">⚑</button></h3>${q.cevap.map(fmtPara).join('')}</section>`; }).join('')}
+      return `<section class="ls" id="ls-${qi}"><h3><span class="no">${k + 1}</span>${esc(q.soru)}<button class="rep" data-s="${qi}" title="Bu bölümdeki bir hatayı bildir" onclick="openReport('s',${qi})">⚑</button></h3>${q.cevap.map(fmtPara).join('')}</section>`; }).join('')}
   </div>
-  ${kisa.length ? `<div class="section-title">Kısa bilgiler</div><div class="quick">${kisa.map(qi => `<div class="qk"><span>${esc(SORULAR[qi].soru)}</span><b>${esc(SORULAR[qi].cevap.join(' '))}</b></div>`).join('')}</div>` : ''}
-  ${u.narr ? `<details class="oq" style="margin-top:18px"><summary>Ek okuma: ${NARR_BASLIK[u.narr]}</summary><div class="lesson" style="margin-top:8px">${NARR[u.narr].map(fmtPara).join('')}</div><p class="count" style="margin-top:8px">Kaynak: Servet Hayma, Literatür Çalışması</p></details>` : ''}
+  ${kisa.length ? `<div class="section-title">Kısa bilgiler</div><div class="quick">${kisa.map(qi => `<div class="qk" id="ls-${qi}"><span>${esc(SORULAR[qi].soru)}</span><b>${esc(SORULAR[qi].cevap.join(' '))}</b></div>`).join('')}</div>` : ''}
+  ${u.narr ? `<details class="oq" id="narr" style="margin-top:18px"><summary>Ek okuma: ${NARR_BASLIK[u.narr]}</summary><div class="lesson" style="margin-top:8px">${NARR[u.narr].map((p, k) => fmtPara(p).replace(/^<(p|div)/, `<$1 id="nr-${k}"`)).join('')}</div><p class="count" style="margin-top:8px">Kaynak: Servet Hayma, Literatür Çalışması</p></details>` : ''}
   <details class="oq" style="margin-top:12px"><summary>Bu ünitenin eser–müellif tablosu (${u.ids.length} eser)</summary>
     <div class="study-list" style="margin-top:10px">${u.ids.map(id => { const r = ESERLER[id];
       return `<div class="srow"><div class="e">${esc(r.e)}</div><div class="v">${vText(r)}</div><div class="m">${esc(r.m)}</div>${r.n ? `<div class="n">${esc(r.n)}</div>` : ''}</div>`; }).join('')}</div></details>
@@ -631,6 +651,113 @@ function unitQuizEnd() {
       ${gecti && sonraki !== null ? `<button class="btn" onclick="go('unitView',${sonraki})">Sonraki ünite →</button>` : `<button class="btn" onclick="go('quiz',{ids:[${UNITELER[i].ids}],adet:5,unit:${i}})">Tekrar dene</button>`}
     </div>
   </div>`;
+}
+
+/* ---------- genel arama (üst çubuktaki 🔍) ---------- */
+let pendingFocus = null, pendingQuery = null;
+// Hafif normalleştirme + orijinal metne konum haritası (vurgulama için)
+function nmap(str) {
+  let n = '', map = [];
+  for (let i = 0; i < str.length; i++) {
+    let c = str[i].toLocaleLowerCase('tr');
+    if (c === 'ı') c = 'i';
+    c = c.normalize('NFD').replace(/[̀-ͯ]/g, '');
+    if (/[’'ʿʾ‘`"“”]/.test(c)) continue;
+    if (/[-–—_/]/.test(c) || /\s/.test(c)) c = ' ';
+    for (const ch of c) { if (ch === ' ' && n.endsWith(' ')) continue; n += ch; map.push(i); }
+  }
+  return { n, map };
+}
+const snorm = t => nmap(t).n.trim();
+let SIDX = null;
+function buildIndex() {
+  const ix = [];
+  ESERLER.forEach(r => ix.push({ k: 'e', id: r.id, n: snorm(`${r.e} ${r.m} ${r.n} ${r.s} ${r.a}`), h: snorm(`${r.e} ${r.m}`) }));
+  UNITELER.forEach((u, ui) => {
+    u.q.forEach(qi => { const q = SORULAR[qi]; ix.push({ k: 'l', ui, qi, paras: [q.soru, ...q.cevap], n: snorm(q.soru + ' ' + q.cevap.join(' ')) }); });
+    if (u.narr) NARR[u.narr].forEach((p, k) => ix.push({ k: 'n', ui, nk: k, paras: [p], n: snorm(p) }));
+  });
+  return ix;
+}
+function snippet(paras, t) {
+  for (const p of paras) {
+    const m = nmap(p), at = m.n.indexOf(t);
+    if (at < 0) continue;
+    const a = m.map[at], b = m.map[Math.min(at + t.length - 1, m.map.length - 1)] + 1;
+    const from = Math.max(0, a - 60), to = Math.min(p.length, b + 80);
+    return (from > 0 ? '…' : '') + esc(p.slice(from, a)) + '<mark>' + esc(p.slice(a, b)) + '</mark>' + esc(p.slice(b, to)) + (to < p.length ? '…' : '');
+  }
+  return '';
+}
+function openSearch() {
+  const o = $('#sov');
+  if (!o.classList.contains('open')) { try { history.pushState(Object.assign({}, history.state, { search: true }), ''); } catch (e) {} }
+  o.classList.add('open'); document.body.style.overflow = 'hidden';
+  const i = $('#sq'); i.focus(); i.select(); doGlobalSearch();
+}
+let afterClose = null;
+function closeSearch(viaPop, then) {
+  const o = $('#sov'); if (!o.classList.contains('open')) { then && then(); return; }
+  if (!viaPop && history.state && history.state.search) { afterClose = then || null; history.back(); return; }
+  o.classList.remove('open'); document.body.style.overflow = '';
+  const f = then || afterClose; afterClose = null; f && f();
+}
+$('#sov').addEventListener('click', e => { if (e.target.id === 'sov') closeSearch(); });
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && $('#sov').classList.contains('open')) closeSearch();
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); openSearch(); }
+});
+function doGlobalSearch() {
+  const raw = $('#sq').value, t = snorm(raw), box = $('#sres');
+  if (t.length < 2) { box.innerHTML = '<p class="empty">En az 2 harf yaz. Örnek: <i>hidaye</i>, <i>nesefi</i>, <i>mutûn-i erbaa</i>, <i>zâhirü\'r-rivâye</i></p>'; return; }
+  SIDX ||= buildIndex();
+  const hits = SIDX.filter(x => x.n.includes(t));
+  const esAll = hits.filter(x => x.k === 'e').sort((a, b) => b.h.includes(t) - a.h.includes(t));
+  const es = esAll.slice(0, 6);
+  let ls = hits.filter(x => x.k !== 'e');
+  const buradaki = curView === 'unitView' ? curArg : null;
+  ls.sort((a, b) => (b.ui === buradaki) - (a.ui === buradaki) || a.ui - b.ui);
+  const kac = ls.length; ls = ls.slice(0, 25);
+  const eHTML = es.map(x => { const r = ESERLER[x.id];
+    return `<button class="sitem" onclick="hitEser(${r.id})"><div class="t">${esc(r.e)}</div><div class="x">${esc(r.m)}${r.v ? ' · ' + vText(r) : ''} · ${esc(r.a)}${r.s ? ' / ' + esc(r.s) : ''}</div></button>`; }).join('');
+  const lHTML = ls.map(x => { const u = UNITELER[x.ui];
+    const baslik = x.k === 'l' ? SORULAR[x.qi].soru : 'Ek okuma';
+    return `<button class="sitem" onclick="hitLesson(${x.ui},${x.k === 'l' ? x.qi : -1},${x.k === 'n' ? x.nk : -1})"><div class="w">${x.ui === buradaki ? 'Bu ünitede · ' : ''}Ünite ${x.ui + 1} · ${esc(u.t)}</div><div class="t">${esc(baslik)}</div><div class="x">${snippet(x.paras, t)}</div></button>`; }).join('');
+  const fazla = esAll.length - es.length;
+  box.innerHTML = (es.length ? `<div class="sgrp">Eserler ve müellifler (${esAll.length})</div>${eHTML}${fazla > 0 ? `<button class="sitem" style="text-align:center;color:var(--green);font-weight:600" onclick="closeSearch(false, () => { pendingQuery = ${JSON.stringify(raw).replace(/"/g, '&quot;')}; go('browse'); })">+${fazla} eser daha · hepsini gör</button>` : ''}` : '') +
+    (ls.length ? `<div class="sgrp">Ünite anlatımları (${kac})</div>${lHTML}` : '') +
+    (!es.length && !ls.length ? '<p class="empty">Sonuç bulunamadı.</p>' : '');
+  box.dataset.t = t;
+}
+function hitEser(id) { closeSearch(false, () => { pendingQuery = ESERLER[id].e; go('browse'); }); }
+function hitLesson(ui, qi, nk) {
+  const t = $('#sres').dataset.t;
+  closeSearch(false, () => {
+    if (curView === 'unitView' && curArg === ui) focusHit({ qi, nk, t });
+    else { pendingFocus = { qi, nk, t }; go('unitView', ui); }
+  });
+}
+function markIn(el, t) {
+  const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT); const nodes = [];
+  while (walker.nextNode()) nodes.push(walker.currentNode);
+  let first = null;
+  for (const node of nodes) {
+    const m = nmap(node.nodeValue); let at = m.n.indexOf(t);
+    if (at < 0) continue;
+    const a = m.map[at], b = m.map[at + t.length - 1] + 1;
+    const r = document.createRange(); r.setStart(node, a); r.setEnd(node, b);
+    const mk = document.createElement('mark'); r.surroundContents(mk); first ||= mk;
+  }
+  return first;
+}
+function focusHit(f) {
+  let el = null;
+  if (f.nk >= 0) { const d = $('#narr'); if (d) d.open = true; el = document.getElementById('nr-' + f.nk); }
+  else el = document.getElementById('ls-' + f.qi);
+  if (!el) return;
+  const mk = f.t ? markIn(el, f.t) : null;
+  (mk || el).scrollIntoView({ behavior: 'smooth', block: 'center' });
+  el.classList.add('flash-target');
 }
 
 /* ---------- hata bildirimi (Muhtâr ile aynı sistem) ---------- */
