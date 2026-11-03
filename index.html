@@ -264,6 +264,25 @@ const TDV = [
   { s: 'zemahseri', v: ['Zemahşerî', 'Zemahşeri'] },
   { s: 'kurtubi-muhammed-b-ahmed', v: ['Kurtubî'] },
   { s: 'kurtubi-ahmed-b-omer', v: ['Kurtubî (ö. 656)'] },
+  { s: 'taberi-muhammed-b-cerir', v: ['Taberî', 'İbn Cerîr et-Taberî'] },
+  { s: 'fahreddin-er-razi', v: ['Fahreddin er-Râzî', 'Fahruddin er-Râzî', 'Fahreddin Râzî', 'Fahrettin Razi'] },
+  { s: 'ebussuud-efendi', v: ['Ebüssuûd Efendi', 'Ebüssuûd'] },
+  { s: 'beyzavi', v: ['Beyzâvî', 'Kâdî Beyzâvî', 'Kadı Beydâvî', 'Beydâvî'] },
+  { s: 'alusi-sehabeddin-mahmud', v: ['Âlûsî'] },
+  { s: 'elmalili-muhammed-hamdi', v: ['Elmalılı Hamdi Yazır', 'Elmalılı Muhammed Hamdi', 'Elmalılı'] },
+  { s: 'ibn-kesir-ebul-fida', v: ['İbn Kesîr', 'İbn Kesir'] },
+  // Hadis usulü / ricâl
+  { s: 'nevevi', v: ['İmam Nevevî', 'Nevevî'] },
+  { s: 'ibnus-salah-es-sehrezuri', v: ["İbnü's-Salâh", "İbnu's-Salâh", "İbnu's-Salah", "Îbnu's-Salah"] },
+  { s: 'hatib-el-bagdadi', v: ['Hatîb el-Bağdâdî'] },
+  { s: 'hakim-en-nisaburi', v: ['Hâkim en-Nîsâbûrî'] },
+  { s: 'kadi-iyaz', v: ['Kādî İyâz', 'Kâdî İyâz', 'Kadı İyâz', 'Kadı İyaz'] },
+  { s: 'zehebi', v: ['Zehebî'] },
+  { s: 'mizzi-yusuf-b-abdurrahman', v: ['Mizzî'] },
+  // Fıkıh usulü
+  { s: 'satibi-ibrahim-b-musa', v: ['Şâtıbî', 'İmam Şâtıbî'] },
+  // Bağlantı verilmeyecek adaşlar (yanlış maddeye gitmesin)
+  { s: '', v: ['Muhammed Hüseyin ez-Zehebî', 'Muhammed Hüseyn ez-Zehebî', 'Hüseyin ez-Zehebî', 'Hüseyn ez-Zehebî', 'Muḳaddimetü İbni\'s-Salâh', "Mukaddimetü İbni's-Salâh"] },
 ];
 </script>
 <script>
@@ -823,7 +842,7 @@ function linkNames(html, ov) {
     if (!hits.length) return seg;
     hits.sort((x, y) => x.a - y.a);
     let out = '', i = 0;
-    for (const h of hits) { out += seg.slice(i, h.a) + `<a class="tdvn" href="https://islamansiklopedisi.org.tr/${h.s}" target="_blank" rel="noopener" title="TDV İslâm Ansiklopedisi'nde oku">${seg.slice(h.a, h.b)}</a>`; i = h.b; }
+    for (const h of hits) { if (!h.s) { out += seg.slice(i, h.b); i = h.b; continue; } out += seg.slice(i, h.a) + `<a class="tdvn" href="https://islamansiklopedisi.org.tr/${h.s}" target="_blank" rel="noopener" title="TDV İslâm Ansiklopedisi'nde oku">${seg.slice(h.a, h.b)}</a>`; i = h.b; }
     return out + seg.slice(i);
   }).join('');
 }
